@@ -12008,6 +12008,7 @@ in
   boost170 = callPackage ../development/libraries/boost/1.70.nix { };
   boost171 = callPackage ../development/libraries/boost/1.71.nix { };
   boost172 = callPackage ../development/libraries/boost/1.72.nix { };
+  boost173 = callPackage ../development/libraries/boost/1.73.nix { };
   boost17x = boost172;
   boost = boost16x;
 
