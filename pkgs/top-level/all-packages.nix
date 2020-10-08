@@ -16033,6 +16033,18 @@ in
 
   yubikey-agent = callPackage ../tools/security/yubikey-agent { };
 
+  yuzu-mainline = libsForQt5.callPackage ../misc/emulators/yuzu-mainline { 
+    unicorn-emu = unicorn-emu.overrideAttrs (_: { # yuzu uses this version and fork of unicorn as a submodule, upstream does not work.
+      version = "unstable-2018-01-04";
+      src = fetchFromGitHub {
+        owner = "yuzu-emu";
+        repo = "unicorn";
+        rev = "73f45735354396766a4bfb26d0b96b06e5cf31b2";
+        sha256 = "06gjv9civg5pqar246v3yak20i3kyzsjcznq5l3z6kngljx1fqh4";
+      };
+    });
+  };
+
   zchunk = callPackage ../development/libraries/zchunk { };
 
   zeitgeist = callPackage ../development/libraries/zeitgeist { };
