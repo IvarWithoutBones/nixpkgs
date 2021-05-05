@@ -2,6 +2,7 @@
 , qtbase, qtx11extras, qtsvg, makeWrapper
 , vulkan-loader, libglvnd, xorg, python3, python3Packages
 , bison, pcre, automake, autoconf, addOpenGLRunpath
+, androidSupport ? true, jdk, androidenv
 }:
 let
   custom_swig = fetchFromGitHub {
@@ -11,6 +12,15 @@ let
     sha256 = "15r2m5kcs0id64pa2fsw58qll3jyh71jzc04wy20pgsh2326zis6";
   };
   pythonPackages = python3Packages;
+
+  androidComposition = lib.optionals androidSupport androidenv.composeAndroidPackages {
+    # Versioning is based off of: https://github.com/baldurk/renderdoc/blob/v1.x/docs/CONTRIBUTING/Dependencies.md#android-dependencies-on-linux
+    toolsVersion = "26.0.1";
+    platformVersions = [ "23" ];
+    abiVersions = [ "armeabi-v7a" "arm64-v8a" ];
+    includeNDK = true;
+    ndkVersion = "16.1.4479499"; # Version 14b is supposed to be used instead of 16b, but evaluating that revision leads to errors
+  };
 in
 mkDerivation rec {
   version = "1.12";
@@ -28,7 +38,11 @@ mkDerivation rec {
   ]; # ++ (with pythonPackages; [pyside2 pyside2-tools shiboken2]);
   # TODO: figure out how to make cmake recognise pyside2
 
-  nativeBuildInputs = [ cmake makeWrapper pkg-config bison pcre automake autoconf addOpenGLRunpath ];
+  nativeBuildInputs = [ cmake makeWrapper pkg-config bison pcre automake autoconf addOpenGLRunpath ]
+    ++ lib.optionals androidSupport [ jdk androidComposition.androidsdk ];
+
+  ANDROID_SDK = lib.optionals androidSupport "${androidComposition.androidsdk}/libexec/android-sdk";
+  ANDROID_NDK = lib.optionals androidSupport "${androidComposition.ndk-bundle}/libexec/android-sdk/ndk-bundle";
 
   postUnpack = ''
     cp -r ${custom_swig} swig
@@ -42,6 +56,9 @@ mkDerivation rec {
     "-DBUILD_VERSION_DIST_VER=${version}"
     "-DBUILD_VERSION_DIST_CONTACT=https://github.com/NixOS/nixpkgs/tree/master/pkgs/applications/graphics/renderdoc"
     "-DBUILD_VERSION_STABLE=ON"
+  ] ++ lib.optionals androidSupport [
+    "-DBUILD_ANDROID=On"
+    "-DANDROID_ABI=armeabi-v7a"
   ];
 
   # TODO: define these in the above array via placeholders, once those are widely supported
