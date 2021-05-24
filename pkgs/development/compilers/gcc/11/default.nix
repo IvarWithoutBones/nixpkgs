@@ -1,7 +1,7 @@
 { lib, stdenv, targetPackages, fetchurl, fetchpatch, noSysDirs
 , langC ? true, langCC ? true, langFortran ? false
 , langAda ? false
-, langObjC ? stdenv.targetPlatform.isDarwin
+, langObjC ? (stdenv.targetPlatform.isDarwin || enableSwitch)
 , langObjCpp ? stdenv.targetPlatform.isDarwin
 , langGo ? false
 , reproducibleBuild ? true
@@ -14,6 +14,8 @@
   # we can't rebuild those without also rebuilding the compiler itself,
   # we opt to always build everything unlike our usual policy.
   enableShared ? true
+  # TODO: set to false before committing
+, enableSwitch ? true, newlib # A patched version of newlib is required
 , enableLTO ? true
 , texinfo ? null
 , perl ? null # optional, for texi2pod (then pod2man)
@@ -78,7 +80,22 @@ let majorVersion = "11";
       })
 
       # Obtain latest patch with ../update-mcfgthread-patches.sh
-      ++ optional (!crossStageStatic && targetPlatform.isMinGW) ./Added-mcf-thread-model-support-from-mcfgthread.patch;
+      ++ optional (!crossStageStatic && targetPlatform.isMinGW) ./Added-mcf-thread-model-support-from-mcfgthread.patch
+      ++ optional enableSwitch (fetchpatch {
+        url = "https://raw.githubusercontent.com/devkitPro/buildscripts/a87f68d4ddc140d8bfecf15cbef7078c8d21dcb3/dka64/patches/gcc-11.1.0.patch";
+        sha256 = "07hjpwz47pv4zx3ih4gck7ppz97yn4cp9xmbfkqy81bvc9kqwgz8";
+      });
+
+    switchNewlib = lib.optionals enableSwitch (newlib.overrideAttrs (attrs: {
+      patches = attrs.patches + (fetchpatch {
+        url = "https://raw.githubusercontent.com/devkitPro/buildscripts/e95246347614d9ff71c083d46dbf35da84bc67de/dka64/patches/newlib-4.1.0.patch";
+        sha256 = "1gbkj8xxrddggpr1w5cn9h4gvyqpric9pxmhym048iryavn2736r";
+      });
+      configureFlags = attrs.configureFlags ++ [
+        "--enable-newlib-mb"
+        "--disable-newlib-wide-orient"
+      ];
+    }));
 
     /* Cross-gcc settings (build == host != target) */
     crossMingw = targetPlatform != hostPlatform && targetPlatform.libc == "msvcrt";
@@ -212,6 +229,7 @@ stdenv.mkDerivation ({
       enableMultilib
       enablePlugin
       enableShared
+      enableSwitch switchNewlib fetchpatch
 
       langC
       langCC

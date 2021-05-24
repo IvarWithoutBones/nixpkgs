@@ -11,6 +11,7 @@
 , enableMultilib
 , enablePlugin
 , enableShared
+, enableSwitch ? null, switchNewlib ? null, fetchpatch ? null
 
 , langC
 , langCC
@@ -96,6 +97,31 @@ let
       # In uclibc cases, libgomp needs an additional '-ldl'
       # and as I don't know how to pass it, I disable libgomp.
       "--disable-libgomp"
+    ] ++ lib.optionals (enableSwitch!=null) [ # Flags set based on https://github.com/devkitPro/buildscripts/blob/e95246347614d9ff71c083d46dbf35da84bc67de/dka64/scripts/build-gcc.sh#L47
+      "--with-gnu-as"
+      "--with-gnu-ld"
+      "--with--gcc"
+      "--with-march=armv8"
+      "--target=aarch64-none-elf"
+      "--enable-cxx-flags='-ffunction-sections'"
+      "--disable-libstdcxx-verbose"
+      "--enable-poison-system-directories"
+      "--enable-interwork"
+      "--enable-multilib"
+      "--enable-threads"
+      "--disable-win32-registry"
+      "--disable-nls"
+      "--disable-debug"
+      "--disable-libmudflap"
+      "--disable-libssp"
+      "--disable-libgomp"
+      "--disable-libstdcxx-pch"
+      "--enable-libstdcxx-time"
+      "--enable-libstdcxx-filesystem-ts"
+      "--with-newlib=yes"
+      "--with-headers=${switchNewlib.src}/newlib/libc/include"
+      "--disable-tm-clone-registry"
+      "--disable-__cxa_atexit"
     ] ++ lib.optional (targetPlatform.libc == "newlib") "--with-newlib"
       ++ lib.optional (targetPlatform.libc == "avrlibc") "--with-avrlibc"
     );
