@@ -19959,6 +19959,8 @@ in
 
   storm = callPackage ../servers/computing/storm { };
 
+  switch = recurseIntoAttrs (callPackage ../development/switch { });
+
   switcheroo-control = callPackage ../os-specific/linux/switcheroo-control { };
 
   slurm = callPackage ../servers/computing/slurm { gtk2 = null; };

@@ -101,6 +101,10 @@ rec {
     config = "aarch64-unknown-linux-musl";
   };
 
+  aarch64-none-elf = {
+    config = "aarch64-none-elf";
+  };
+
   gnu64 = { config = "x86_64-unknown-linux-gnu"; };
   gnu32  = { config = "i686-unknown-linux-gnu"; };
 
